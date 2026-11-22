@@ -1,0 +1,187 @@
+Pager usage is off.
+Border style is 2.
+================================================================
+ V1. FINAL COUNTS
+================================================================
++----------+------------+---------------+------------+----------------------+---------------------+
+| raw_rows | clean_rows | rejected_rows | reconciles | clean_rows_q3_window | companies_q3_window |
++----------+------------+---------------+------------+----------------------+---------------------+
+|     4675 |       4673 |             2 | t          |                  453 |                 389 |
++----------+------------+---------------+------------+----------------------+---------------------+
+(1 row)
+
+ V2. Rejected rows and reasons
++--------+-------------+------------+----------------+------------------------------------------------------+---------------------+
+| row_id |   company   |    date    | total_laid_off |                    reject_reason                     | duplicate_of_row_id |
++--------+-------------+------------+----------------+------------------------------------------------------+---------------------+
+|   3198 | Beyond Meat | 10/14/2022 | 200.0          | duplicate event (identical except source/date_added) |                3197 |
+|   3809 | Cazoo       | 6/7/2022   | 750.0          | duplicate event (identical except source/date_added) |                3808 |
++--------+-------------+------------+----------------+------------------------------------------------------+---------------------+
+(2 rows)
+
+ V3. Missing values were NOT imputed: NULLs raw vs clean
++-------------------------------+-----------+-------------+
+|              col              | raw_nulls | clean_nulls |
++-------------------------------+-----------+-------------+
+| total_laid_off                |      1627 |        1627 |
+| percentage_laid_off           |      1758 |        1758 |
+| funds_raised                  |       556 |         556 |
+| stage (raw NULL or 'Unknown') |       790 |         790 |
+| industry                      |         2 |           2 |
+| country                       |         2 |           2 |
++-------------------------------+-----------+-------------+
+(6 rows)
+
+================================================================
+ BEFORE / AFTER EXAMPLES
+================================================================
+ E1. Data types: text dates and "1500.0" counts -> DATE / INTEGER / NUMERIC
++--------+----------+------------+-------------+----------------+------------+-----------+----------------+-----------+--------------+
+| row_id | company  |  raw_date  | layoff_date | raw_date_added | date_added | raw_total | total_laid_off | raw_funds | funds_raised |
++--------+----------+------------+-------------+----------------+------------+-----------+----------------+-----------+--------------+
+|      8 | Bria     | 11/5/2026  | 2026-11-05  | 11/7/2026      | 2026-11-07 | 20.0      |             20 | 66        |         66.0 |
+|      2 | Innoviz  | 11/11/2026 | 2026-11-11  | 11/14/2026     | 2026-11-14 | 80.0      |             80 | 547       |        547.0 |
+|      1 | Qualcomm | 11/11/2026 | 2026-11-11  | 11/14/2026     | 2026-11-14 | 1500.0    |           1500 |           |              |
++--------+----------+------------+-------------+----------------+------------+-----------+----------------+-----------+--------------+
+(3 rows)
+
+ E2. percentage_laid_off float artifacts -> numeric(5,4)
++--------+---------------------+---------------------+-----------+
+| row_id |       company       |       raw_pct       | clean_pct |
++--------+---------------------+---------------------+-----------+
+|   2386 | PhableCare          | 0.7000000000000001  |    0.7000 |
+|   2410 | Olive AI            | 0.35000000000000003 |    0.3500 |
+|   2543 | Luno                | 0.35000000000000003 |    0.3500 |
+|   2572 | Camp K12            | 0.7000000000000001  |    0.7000 |
+|   2587 | Cyteir Therapeutics | 0.7000000000000001  |    0.7000 |
++--------+---------------------+---------------------+-----------+
+(5 rows)
+
+ E3. stage 'Unknown' -> NULL
++--------+-------------+------------+-------------+
+| row_id |   company   | raw_stage  | clean_stage |
++--------+-------------+------------+-------------+
+|      8 | Bria        | [Series B] | Series B    |
+|     14 | Canva       | [Unknown]  | NULL        |
+|    281 | Zondacrypto | [NULL]     | NULL        |
++--------+-------------+------------+-------------+
+(3 rows)
+
+ E4. Untrimmed company / source text -> trimmed (brackets show whitespace)
++--------+-----------------+----------------+
+| row_id |   raw_company   | clean_company  |
++--------+-----------------+----------------+
+|    193 | [Lazada Group ] | [Lazada Group] |
+|    650 | [Wayfair ]      | [Wayfair]      |
+|   1372 | [Lazada Group ] | [Lazada Group] |
+|   1517 | [F-Secure ]     | [F-Secure]     |
+|   1636 | [Bonterra ]     | [Bonterra]     |
++--------+-----------------+----------------+
+(5 rows)
+
++--------+----------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+| row_id |                                       raw_source                                       |                                     clean_source                                      |
++--------+----------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+|   1695 | [Times Internet ]                                                                      | [Times Internet]                                                                      |
+|   2187 | [https://technical.ly/startups/crossbeam-layoffs-2023/ ]                               | [https://technical.ly/startups/crossbeam-layoffs-2023/]                               |
+|   4455 | [ https://www.biopharmadive.com/news/sage-restructuring-layoffs-340-employees/575641/] | [https://www.biopharmadive.com/news/sage-restructuring-layoffs-340-employees/575641/] |
++--------+----------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------+
+(3 rows)
+
+ E5. Country synonym UAE -> United Arab Emirates
++----------------------+----------------------+-------+
+|     raw_country      |    clean_country     | count |
++----------------------+----------------------+-------+
+| UAE                  | United Arab Emirates |     3 |
+| United Arab Emirates | United Arab Emirates |     7 |
++----------------------+----------------------+-------+
+(2 rows)
+
+ E6. Location: ", Non-U.S." suffix split into location_city + flag
++--------+---------------------+---------------+-----------------------+---------------+
+| row_id |    raw_location     | location_city | location_non_us_label |    country    |
++--------+---------------------+---------------+-----------------------+---------------+
+|      1 | Bengaluru, Non-U.S. | Bengaluru     | t                     | India         |
+|      3 | New York City       | New York City | f                     | United States |
+|    144 | Non-U.S.            |               | t                     | Seychelles    |
+|   3121 | Non-U.S.            |               | t                     | Seychelles    |
+|   3960 | Non-U.S.            |               | t                     | Seychelles    |
++--------+---------------------+---------------+-----------------------+---------------+
+(5 rows)
+
+ E7. Location vs country conflicts: kept, flagged (not corrected)
++--------+---------------+---------------------+---------------+---------------------------+
+| row_id |    company    |      location       |    country    | location_country_conflict |
++--------+---------------+---------------------+---------------+---------------------------+
+|    280 | GeoComply     | Vancouver, Non-U.S. | United States | t                         |
+|    285 | Shutterfly    | Haifa, Non-U.S.     | United States | t                         |
+|    344 | At-Bay        | Tel Aviv, Non-U.S.  | United States | t                         |
+|    350 | eBay          | SF Bay Area         | Israel        | t                         |
+|    427 | Aqua Security | Tel Aviv, Non-U.S.  | United States | t                         |
+|    458 | Medtronic     | Jerusalem, Non-U.S. | United States | t                         |
+|    482 | ZipRecruiter  | Tel Aviv, Non-U.S.  | United States | t                         |
+|    500 | Salesforce    | Dublin, Non-U.S.    | United States | t                         |
++--------+---------------+---------------------+---------------+---------------------------+
+(8 rows)
+
++---------------+
+| conflict_rows |
++---------------+
+|            31 |
++---------------+
+(1 row)
+
+ E8. Duplicate events: before (raw) and after (clean / rejected)
++--------+-------------+------------+----------------+---------------------+------------+-----------------------------------------------+
+| row_id |   company   |    date    | total_laid_off | percentage_laid_off | date_added |                    source                     |
++--------+-------------+------------+----------------+---------------------+------------+-----------------------------------------------+
+|   3197 | Beyond Meat | 10/14/2022 | 200.0          | 0.19                | 10/14/2022 | https://www.cnbc.com/2022/10/14/beyond-meat-t |
+|   3198 | Beyond Meat | 10/14/2022 | 200.0          | 0.19                | 11/7/2023  | https://www.fooddive.com/news/beyond-meat-lay |
+|   3808 | Cazoo       | 6/7/2022   | 750.0          | 0.15                | 6/7/2022   | https://news.sky.com/story/car-retailer-cazoo |
+|   3809 | Cazoo       | 6/7/2022   | 750.0          | 0.15                | 9/9/2022   | https://sifted.eu/articles/cazoo-layoffs-euro |
++--------+-------------+------------+----------------+---------------------+------------+-----------------------------------------------+
+(4 rows)
+
++----------+--------+
+| lands_in | row_id |
++----------+--------+
+| clean    |   3197 |
+| rejected |   3198 |
+| clean    |   3808 |
+| rejected |   3809 |
++----------+--------+
+(4 rows)
+
+ E9. Near duplicates (same company + same date, different details): kept, flagged
++--------------+--------+
+| rows_flagged | groups |
++--------------+--------+
+|           40 |     19 |
++--------------+--------+
+(1 row)
+
++--------+---------+----------------+----------------+-------------+------------------+
+| row_id | company |    location    | total_laid_off | layoff_date | same_day_reports |
++--------+---------+----------------+----------------+-------------+------------------+
+|    145 | Amazon  | Port St. Lucie |           1110 | 2026-07-22  |                2 |
+|    147 | Amazon  | Seattle        |                | 2026-07-22  |                2 |
+|    519 | Oracle  | SF Bay Area    |            289 | 2025-08-13  |                3 |
+|    520 | Oracle  | SF Bay Area    |            188 | 2025-08-13  |                3 |
+|    521 | Oracle  | Seattle        |            161 | 2025-08-13  |                3 |
++--------+---------+----------------+----------------+-------------+------------------+
+(5 rows)
+
+ E10. Same company, different spellings: original kept, company_key aligns them
++---------------+-----------------------------------+------+
+|  company_key  |             spellings             | rows |
++---------------+-----------------------------------+------+
+| characterai   | {Character.ai,Character.AI}       |    2 |
+| hubspot       | {Hubspot,HubSpot}                 |    3 |
+| mryum         | {"Mr Yum","Mr. Yum"}              |    2 |
+| open          | {&Open,Open}                      |    2 |
+| skipthedishes | {"Skip the Dishes",SkipTheDishes} |    2 |
+| tiktok        | {Tiktok,TikTok}                   |   11 |
+| uipath        | {UiPath,UIPath}                   |    3 |
++---------------+-----------------------------------+------+
+(7 rows)
+
