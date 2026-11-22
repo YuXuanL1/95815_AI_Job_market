@@ -133,10 +133,10 @@ SELECT k AS match_key, array_agg(DISTINCT '[' || company || ']') AS raw_spelling
 FROM (SELECT company, regexp_replace(lower(company), '[^a-z0-9]', '', 'g') AS k FROM raw.layoffs) x
 GROUP BY k HAVING count(DISTINCT company) > 1 ORDER BY k;
 
-\echo '== P22. Rows in the Question 3 window (2025-11-01 .. 2026-11-11)'
+\echo '== P22. Rows in the Question 3 window (layoffs dated in 2025 or 2026)'
 SELECT count(*) AS window_rows,
-       count(DISTINCT lower(btrim(company))) AS window_companies,
+       count(DISTINCT regexp_replace(lower(btrim(company)), '[^a-z0-9]', '', 'g')) AS window_companies,
        count(*) FILTER (WHERE total_laid_off IS NULL) AS window_no_count,
        count(*) FILTER (WHERE stage = 'Unknown' OR stage IS NULL) AS window_no_stage
 FROM raw.layoffs
-WHERE to_date(date, 'MM/DD/YYYY') BETWEEN DATE '2025-11-01' AND DATE '2026-11-11';
+WHERE to_date(date, 'MM/DD/YYYY') BETWEEN DATE '2025-01-01' AND DATE '2026-12-31';

@@ -18,14 +18,14 @@
   - `industry` (30 categories)
   - `source` (news URL)
   - `stage` (funding stage, e.g. Seed, Series B, Post-IPO)
-  - `funds_raised` (USD millions [VERIFY unit on source page])
+  - `funds_raised` (USD millions)
   - `country` (67 distinct values)
   - `date_added` (date the record was added to Layoffs.fyi)
 - **Date coverage:** layoff dates run from 2020-03-11 to 2026-11-11. By year: 2020: 635 rows; 2021: 44; 2022: 1,231; 2023: 1,390; 2024: 635; 2025: 333; 2026: 407.
 
 ### Relevance to Our Questions
-This dataset answers **Question 3**: among companies that announced layoffs between November 2025 and November 2026, which ones still advertise AI-related roles, and how does this differ by industry and funding stage?
-- It gives us the list of companies with recent layoffs: 453 events from 389 distinct companies dated 2025-11-01 to 2026-11-11.
+This dataset answers **Question 3**: among companies that announced layoffs between 2025 and 2026, which are still advertising AI-related roles today, and how does this differ by industry and funding stage?
+- It gives us the list of companies with recent layoffs: 740 events from 569 distinct companies dated 2025-01-01 to 2026-11-11 (the last date in the data).
 - It also supplies each company's `industry` and `stage`, which are the two grouping variables in Question 3.
 - In Milestone 3 we will join it with the Adzuna job postings on a normalized company name. The cleaned table already includes a `company_key` column to support that join.
 
@@ -71,7 +71,7 @@ All cleaning is done in SQL (`03_clean.sql`) and runs as a single transaction:
 **Row counts:**
 - Before: raw 4,675.
 - After: clean 4,673 and rejected 2. The check raw = clean + rejected passed, and the script fails loudly if it does not.
-- The Question 3 window still has 453 clean rows (389 companies).
+- The Question 3 window (2025–2026) keeps all 740 rows (569 companies); none were rejected.
 
 ### Limitations
 - **Location:** `location` is the company's **headquarters**, not where employees were laid off.

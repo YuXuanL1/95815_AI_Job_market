@@ -5,7 +5,7 @@
 - Original source: https://layoffs.fyi
 
 ## Narration script (about 45 seconds)
-> Our third dataset is the Layoffs dataset from Kaggle. It is compiled from Layoffs.fyi, which tracks tech layoffs reported by outlets like Bloomberg and TechCrunch. It has 4,675 layoff events and 11 columns, from March 2020 to November 2026; 453 of those events fall in our November 2025 to November 2026 window. We loaded the CSV into PostgreSQL with every column stored as text in a raw schema, so no source record could be lost, and the load script checks that the row count matches the file. The worst quality issues are missing size data: about 35 percent of rows have no layoff count, and 782 rows use the placeholder "Unknown" for funding stage. On top of that, dates and numbers are stored as text, and 31 rows have locations that contradict their country. In the clean schema we parsed the types, turned "Unknown" into NULL without imputing anything, flagged the conflicts instead of guessing, and moved 2 duplicate events into a rejected table, so 4,673 clean rows plus 2 rejected rows add back up to exactly 4,675.
+> Our third dataset is the Layoffs dataset from Kaggle. It is compiled from Layoffs.fyi, which tracks tech layoffs reported by outlets like Bloomberg and TechCrunch. It has 4,675 layoff events and 11 columns, from March 2020 to November 2026; 740 of those events, from 569 companies, happened in 2025 or 2026, the window for our layoff question. We loaded the CSV into PostgreSQL with every column stored as text in a raw schema, so no source record could be lost, and the load script checks that the row count matches the file. The worst quality issues are missing size data: about 35 percent of rows have no layoff count, and 782 rows use the placeholder "Unknown" for funding stage. On top of that, dates and numbers are stored as text, and 31 rows have locations that contradict their country. In the clean schema we parsed the types, turned "Unknown" into NULL without imputing anything, flagged the conflicts instead of guessing, and moved 2 duplicate events into a rejected table, so 4,673 clean rows plus 2 rejected rows add back up to exactly 4,675.
 
 ## What to show on screen (in order)
 1. **Kaggle page:** the description and the license box.
@@ -38,7 +38,7 @@ docker exec -i de-postgres psql -U postgres -d ai_jobs -f /project/sql/04_verify
 | Raw rows / columns | 4,675 / 11 |
 | Layoff date range | 2020-03-11 to 2026-11-11 |
 | Clean rows / rejected rows | 4,673 / 2 (raw = clean + rejected ✔) |
-| Q3 window (2025-11-01 to 2026-11-11) | 453 rows, 389 companies |
+| Q3 window (2025–2026, data ends 2026-11-11) | 740 rows, 569 companies |
 | `total_laid_off` missing | 1,627 (34.8%) |
 | `percentage_laid_off` missing | 1,758 (37.6%) |
 | Neither count nor percentage | 763 |

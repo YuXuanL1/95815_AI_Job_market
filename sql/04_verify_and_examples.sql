@@ -14,9 +14,9 @@ SELECT (SELECT count(*) FROM raw.layoffs)                                  AS ra
        (SELECT count(*) FROM raw.layoffs)
          = (SELECT count(*) FROM clean.layoffs) + (SELECT count(*) FROM clean.layoffs_rejected) AS reconciles,
        (SELECT count(*) FROM clean.layoffs
-         WHERE layoff_date BETWEEN DATE '2025-11-01' AND DATE '2026-11-11') AS clean_rows_q3_window,
+         WHERE layoff_date BETWEEN DATE '2025-01-01' AND DATE '2026-12-31') AS clean_rows_q3_window,
        (SELECT count(DISTINCT company_key) FROM clean.layoffs
-         WHERE layoff_date BETWEEN DATE '2025-11-01' AND DATE '2026-11-11') AS companies_q3_window;
+         WHERE layoff_date BETWEEN DATE '2025-01-01' AND DATE '2026-12-31') AS companies_q3_window;
 
 \echo ' V2. Rejected rows and reasons'
 SELECT row_id, company, date, total_laid_off, reject_reason, duplicate_of_row_id
